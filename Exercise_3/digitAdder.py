@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple
+import matplotlib.pyplot as plt
 
 
 # Create a dataset for digit addition using MNIST dataset
@@ -16,6 +16,7 @@ def create_digit_adder_dataset(x_data, y_data, seed=42):
     sum_labels_list = []
 
     print(f"\nCreating digit addition pairs...")
+    print("=" * 80)
 
     # Create all possible pairs
     for digit1 in range(10):
@@ -53,7 +54,7 @@ def create_digit_adder_dataset(x_data, y_data, seed=42):
                 outputs_list.append(output_pairs)
                 sum_labels_list.extend([sum] * n_pairs)
 
-                print(f"  {digit1} + {digit2} = {sum} ({tens_digit},{ones_digit}): {n_pairs} pairs")
+                print(f"{digit1} + {digit2} = {sum} ({tens_digit},{ones_digit}): {n_pairs} pairs")
 
     # Concatenate all pairs
     inputs = np.concatenate(inputs_list, axis=0)
@@ -69,92 +70,32 @@ def create_digit_adder_dataset(x_data, y_data, seed=42):
     print(f"\nTotal pairs created: {len(inputs)}")
     print(f"Input shape: {inputs.shape}")
     print(f"Output shape: {outputs.shape}")
+    print("=" * 80)
 
     return inputs, outputs, sum_labels
 
 
-# Split digit images from concatenated output
-def split_digit_images(images):
+# Plot examples of digit addition
+def plot_addition_examples(input_img, target_img, predicted_img, n=5):
+
+    fig, axes = plt.subplots(n, 3, figsize=(9, 2*n))
+    plt.subplots_adjust(wspace=0.1, hspace=0.2)
+
+    for i in range(n):
+        # Input (A + B)
+        axes[i, 0].imshow(input_img[i].reshape(28, 56), cmap='gray')
+        axes[i, 0].set_title('Input: A + B', fontsize=12)
+        axes[i, 0].axis('off')
+        
+        # Target output
+        axes[i, 1].imshow(target_img[i].reshape(28, 56), cmap='gray')
+        axes[i, 1].set_title('Target Sum', fontsize=12)
+        axes[i, 1].axis('off')
+        
+        # Predicted output
+        axes[i, 2].imshow(predicted_img[i].reshape(28, 56), cmap='gray')
+        axes[i, 2].set_title('Predicted Sum', fontsize=12)
+        axes[i, 2].axis('off')
     
-    left_digits = images[:, :, :28]
-    right_digits = images[:, :, 28:]
-    
-    return left_digits, right_digits
-
-
-def predict_digit_sums(model, test_inputs, digit_classifier=None):
-    """
-    Predict digit sums using the autoencoder model.
-    Optionally use a digit classifier to interpret the output.
-
-    Args:
-        model: Trained autoencoder model
-        test_inputs: Test input pairs (N, 28, 56, 1) or (N, 3136)
-        digit_classifier: Optional CNN classifier to recognize output digits
-
-    Returns:
-        predictions: Model output
-        recognized_digits: If classifier provided, recognized digit pairs (N, 2)
-        predicted_sums: If classifier provided, predicted sum values (N,)
-    """
-    predictions = model.predict(test_inputs, verbose=0)
-
-    if digit_classifier is not None:
-        # Split predictions into left and right digits
-        pred_shape = predictions.shape
-
-        if len(pred_shape) == 4:  # Convolutional output (N, 28, 56, 1)
-            left_pred, right_pred = split_digit_images(predictions.squeeze())
-        else:  # Flat output (N, 3136)
-            pred_reshaped = predictions.reshape(-1, 28, 56)
-            left_pred, right_pred = split_digit_images(pred_reshaped)
-
-        # Reshape for classifier (N, 28, 28, 1)
-        left_pred = left_pred.reshape(-1, 28, 28, 1)
-        right_pred = right_pred.reshape(-1, 28, 28, 1)
-
-        # Classify digits
-        left_classes = digit_classifier.predict(left_pred, verbose=0).argmax(axis=1)
-        right_classes = digit_classifier.predict(right_pred, verbose=0).argmax(axis=1)
-
-        recognized_digits = np.stack([left_classes, right_classes], axis=1)
-        predicted_sums = left_classes * 10 + right_classes
-
-        return predictions, recognized_digits, predicted_sums
-
-    return predictions, None, None
-
-
-def evaluate_addition_accuracy(model, test_inputs, true_sums, digit_classifier):
-    """
-    Evaluate the accuracy of the digit addition autoencoder.
-
-    Args:
-        model: Trained autoencoder
-        test_inputs: Test inputs
-        true_sums: True sum values
-        digit_classifier: Digit recognition model
-
-    Returns:
-        accuracy: Percentage of correctly predicted sums
-        digit_accuracy: Accuracy per digit position
-    """
-    _, recognized_digits, predicted_sums = predict_digit_sums(
-        model, test_inputs, digit_classifier
-    )
-
-    # Calculate sum accuracy
-    correct_sums = (predicted_sums == true_sums).sum()
-    accuracy = 100 * correct_sums / len(true_sums)
-
-    # Calculate per-digit accuracy
-    true_tens = true_sums // 10
-    true_ones = true_sums % 10
-
-    tens_correct = (recognized_digits[:, 0] == true_tens).sum()
-    ones_correct = (recognized_digits[:, 1] == true_ones).sum()
-
-    tens_accuracy = 100 * tens_correct / len(true_tens)
-    ones_accuracy = 100 * ones_correct / len(true_ones)
-
-    return accuracy, (tens_accuracy, ones_accuracy)
+    plt.tight_layout(pad=0.5)
+    plt.show()

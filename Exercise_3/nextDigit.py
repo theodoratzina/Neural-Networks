@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
@@ -123,32 +122,3 @@ def get_stratified_next_digit_samples(y_test):
             current_position += min_count
     
     return np.array(indices)
-
-
-
-
-
-def next_digit_quality(model, test_inputs, test_outputs, digit_classifier=None):
-    """
-    Evaluate next digit predictions
-    If digit_classifier is provided, check if predicted digit is correctly classified
-    """
-    predictions = model.predict(test_inputs)
-
-    # Calculate MSE
-    mse = np.mean((test_outputs - predictions) ** 2)
-    print(f"Next Digit Prediction MSE: {mse:.6f}")
-
-    # If classifier is provided, check classification accuracy
-    if digit_classifier is not None:
-        pred_classes = np.argmax(digit_classifier.predict(predictions.reshape(-1, 28, 28, 1)), axis=1)
-
-        # Determine expected next digits
-        true_classes = np.argmax(digit_classifier.predict(test_outputs.reshape(-1, 28, 28, 1)), axis=1)
-
-        accuracy = np.mean(pred_classes == true_classes) * 100
-        print(f"Classification Accuracy of Predicted Digits: {accuracy:.2f}%")
-
-        return mse, accuracy
-
-    return mse, None
