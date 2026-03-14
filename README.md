@@ -95,6 +95,10 @@ Implements various Autoencoder architectures on the MNIST dataset.
 - **Next Digit Reconstruction:** A generative regression task aimed at predicting the next digit. Implementations include Dense, Convolutional, and U-Net architectures.
 - **Digit Addition Reconstruction:** Trains the network to visually output the sum of two input digits. Evaluated Dense, Convolutional, and U-Net models.
 
+<div align="center">
+  <img width="800" alt="Digit Addition Reconstruction Example" src="https://github.com/user-attachments/assets/de61d967-72c3-4657-b7bc-16c91d0bb457" />
+</div>
+
 ---
 
 ## Results
